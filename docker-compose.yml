@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: phone-store-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./database_data:/data/db
+    networks:
+      - phone-store-network
+
+  redis:
+    image: redis:alpine
+    container_name: phone-store-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - phone-store-network
+    restart: always
+
+  backend:
+    build: ./backend
+    restart: always
+    container_name: phone-store-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PORT=5001
+      - MONGODB_URI=mongodb://mongo:27017/phone-store
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongo
+    networks:
+      - phone-store-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    restart: always
+    container_name: phone-store-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - phone-store-network
+
+networks:
+  phone-store-network:
+    driver: bridge
+
+# Deleted 'volumes: mongo_data:' section as it is no longer needed
+
