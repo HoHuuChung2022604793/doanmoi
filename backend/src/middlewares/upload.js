@@ -1,23 +1,26 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// Tạo thư mục uploads nếu chưa có
-const uploadDir = path.join(__dirname, '../../uploads/products');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Cấu hình Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Cấu hình storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
+// Cấu hình storage Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const isVideo = file.mimetype.startsWith('video/');
+    return {
+      folder: 'chung-mobile',
+      resource_type: isVideo ? 'video' : 'image',
+      format: isVideo ? 'mp4' : undefined, // Cloudinary sẽ tự xử lý định dạng nếu là ảnh
+      public_id: 'product-' + Date.now() + '-' + Math.round(Math.random() * 1E9)
+    };
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'product-' + uniqueSuffix + ext);
-  }
 });
 
 // Filter cho phép ảnh và video
@@ -38,7 +41,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB
+    fileSize: 100 * 1024 * 1024 // Tăng lên 100MB cho video
   }
 });
 
