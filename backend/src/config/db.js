@@ -6,6 +6,7 @@ const connectDB = async () => {
       maxPoolSize: 10, // Duy trì tối đa 10 kết nối
       serverSelectionTimeoutMS: 5000, // Timeout sau 5s nếu không kết nối được
       socketTimeoutMS: 45000, // Đóng socket sau 45s không hoạt động
+      family: 4 // Ép sử dụng IPv4 để tránh lỗi DNS querySrv
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
